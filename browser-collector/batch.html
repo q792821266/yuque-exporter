@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<title>语雀本机备份</title>
+<style>
+body{font:16px/1.7 system-ui,sans-serif;max-width:960px;margin:40px auto;padding:0 24px;color:#24332e;background:#fafcfb}h1{font-size:28px}button{font:inherit;padding:9px 16px;margin:4px;border:1px solid #167b58;border-radius:6px;cursor:pointer;background:white;color:#136749}button:disabled{opacity:.45;cursor:default}pre{white-space:pre-wrap;overflow-wrap:anywhere;padding:20px;background:#edf3ef;border-radius:10px}table{width:100%;border-collapse:collapse}td,th{text-align:left;border-bottom:1px solid #ddd;padding:8px}small{color:#53605a}
+</style>
+<h1>语雀本机备份</h1>
+<p>先盘点自有知识库的文档和完整目录，再采集已发布正文。存在未发布修改且未经独立核对的版本会跳过并列为失败。</p>
+<p>运行时保持此标签页打开，可以切换到其他页面。关闭浏览器或此页会中断，重新打开后点继续即可；完成的文章保存在此浏览器的本地存储中。</p>
+<button id="inventory">盘点目录 / 继续盘点</button>
+<p><label><input id="all" type="checkbox" checked> 全选：处理全部待采集文章，重试时处理全部失败文章</label><br>
+<label>取消全选后，每轮最多检查 <input id="limit" type="number" min="1" max="100" value="5" disabled style="width:65px"> 篇</label><br>
+<label>同时采集 <select id="concurrency"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option></select> 篇</label>
+<small>网络不稳定时可调低；图片和附件最多同时下载 4 个。</small></p>
+<button id="run">开始 / 继续采集</button>
+<button id="retry">重试失败文章</button>
+<button id="pause">完成正在采集的文章后暂停</button>
+<button id="save">下载本地采集包（ZIP）</button>
+<pre id="status" aria-live="polite">正在读取本地任务……</pre>
+<table><thead><tr><th>知识库</th><th>已发布</th><th>成功</th><th>失败</th></tr></thead><tbody id="books"></tbody></table>
+<p><small>一次下载一个 ZIP，内含 inventory.json 和每篇成功文章的 JSON。解压后可导入本机 Markdown 资料库。文件包含私密正文和图片，不要上传到公开仓库。工具不修改语雀，也不发布网站。</small></p>
+<script src="collector-core.js"></script>
+<script src="concurrency.js"></script>
+<script src="batch-model.js"></script>
+<script src="zip.js"></script>
+<script src="batch.js"></script>
+</html>
