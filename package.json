@@ -1,6 +1,6 @@
 {
   "name": "yuque-exporter",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "description": "Local browser collector for personal Yuque document backups",
   "scripts": {

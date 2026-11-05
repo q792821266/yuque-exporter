@@ -16,6 +16,11 @@ function fixture() {
 }
 function setup(options={}) {
   const {state,snapshot}=fixture(),downloads=[],revoked=[],blobs=new Map();
+  const storedKey=options.reused?'snapshot/older/10/1':'10/1';
+  if(options.reused){
+    snapshot.run_id='older';
+    Object.assign(state.jobs['10/1'],{snapshot_run:'older',snapshot_key:storedKey});
+  }
   const element=()=>({textContent:'',addEventListener(){},replaceChildren(){},append(){}});
   const elements=new Map();
   const context=vm.createContext({Blob,Response,TextEncoder,crypto:webcrypto,AbortSignal,setTimeout,
@@ -23,7 +28,7 @@ function setup(options={}) {
     URL:{createObjectURL:blob=>{blobs.set('blob:test',blob);return 'blob:test';},revokeObjectURL:url=>revoked.push(url)},
     document:{getElementById:id=>{if(!elements.has(id))elements.set(id,element());return elements.get(id);},createElement:element},
     indexedDB:{open:()=>({})},navigator:{},state,
-    load:async()=>options.missing?undefined:{...snapshot,...(options.mismatch?{run_id:'wrong'}:{})},
+    load:async key=>{assert.equal(key,storedKey);return options.missing?undefined:{...snapshot,...(options.mismatch?{run_id:'wrong'}:{})};},
     chrome:{downloads:{download:async args=>{downloads.push(args);if(options.reject)throw Error('download rejected');return 1;},
       search:async()=>[{state:options.interrupted?'interrupted':'complete'}]}}
   });
@@ -34,7 +39,7 @@ function setup(options={}) {
 }
 (async()=>{
   for(const store of [false,true]) {
-    const r=setup({store}),before=JSON.stringify(r.state);
+    const r=setup({store,reused:!store}),before=JSON.stringify(r.state);
     await r.save();
     assert.equal(r.downloads.length,1);assert.equal(r.downloads[0].filename,'yuque-migration/test-run.zip');
     assert.equal(r.downloads[0].conflictAction,'uniquify');assert.deepEqual(r.revoked,['blob:test']);

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "语雀本机备份采集器",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "复用浏览器登录态，盘点自有知识库并可恢复地采集已确认发布版本的普通文档。",
   "permissions": ["activeTab", "downloads"],
   "host_permissions": ["https://www.yuque.com/*", "https://cdn.nlark.com/*", "https://cdn.yuque.com/*"],
