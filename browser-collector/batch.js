@@ -179,20 +179,6 @@ async function run(state,retry,limit=null,concurrency=3) {
   const failures=Object.values(state.jobs).filter(j=>j.status==="failed").length;
   show(state,`本轮已检查 ${attempted} 篇，${failures} 篇失败或版本待核对。可继续采集或下载 ZIP；导入并校验后才算完成 Markdown 备份。`);
 }
-async function downloadBlob(blob,filename) {
-  const url=URL.createObjectURL(blob);
-  try {
-    const id=await chrome.downloads.download({url,filename,saveAs:false,conflictAction:"uniquify"});
-    const deadline=Date.now()+300000;
-    while (Date.now()<deadline) {
-      const [item]=await chrome.downloads.search({id});
-      if (item?.state==="complete") return;
-      if (!item || item.state==="interrupted") throw new Error("下载被取消或中断，浏览器本地任务仍保留，可重新下载。");
-      await new Promise(resolve=>setTimeout(resolve,500));
-    }
-    throw new Error("下载等待超时，本地任务仍保留。");
-  } finally {URL.revokeObjectURL(url);}
-}
 async function save(state) {
   if (!state?.inventory_complete) throw new Error("请先完成目录盘点。");
   if (!/^[\w-]+$/.test(state.run_id)) throw new Error("本机任务编号无效。");

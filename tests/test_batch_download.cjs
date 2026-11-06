@@ -32,7 +32,7 @@ function setup(options={}) {
     chrome:{downloads:{download:async args=>{downloads.push(args);if(options.reject)throw Error('download rejected');return 1;},
       search:async()=>[{state:options.interrupted?'interrupted':'complete'}]}}
   });
-  for(const f of ['collector-core.js','concurrency.js','batch-model.js','zip.js','markdown.js','markdown-export.js','batch.js'])
+  for(const f of ['collector-core.js','concurrency.js','batch-model.js','zip.js','markdown.js','markdown-export.js','download.js','batch.js'])
     vm.runInContext(fs.readFileSync('browser-collector/'+f,'utf8'),context);
   vm.runInContext('readRecord=load;',context);
   // The renderer itself has separate AST and native-browser tests.

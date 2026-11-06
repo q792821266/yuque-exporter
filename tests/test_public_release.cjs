@@ -4,9 +4,9 @@ const path=require('node:path');
 const root=path.resolve(__dirname,'..');
 const expected=new Set([
   '.gitignore','README.md','PRIVACY.md','LICENSE','CHANGELOG.md','package.json','scripts/run-tests.cjs','scripts/build-release.cjs','.github/workflows/ci.yml',
-  ...['manifest.json','popup.html','popup.js','batch.html','batch.js','batch-model.js','collector-core.js','concurrency.js','zip.js','markdown.js','markdown-export.js','verified-versions.json','README.md'].map(n=>'browser-collector/'+n),
+  ...['manifest.json','popup.html','popup.js','batch.html','batch.js','batch-model.js','collector-core.js','concurrency.js','zip.js','markdown.js','markdown-export.js','download.js','verified-versions.json','README.md'].map(n=>'browser-collector/'+n),
   'tests/markdown-browser.html','tests/markdown-browser.js',
-  ...['test_collector','test_batch_collector','test_batch_queue','test_concurrency','test_batch_download','test_public_release','test_markdown','test_release'].map(n=>'tests/'+n+'.cjs')
+  ...['test_collector','test_batch_collector','test_batch_queue','test_concurrency','test_batch_download','test_public_release','test_markdown','test_release','test_popup'].map(n=>'tests/'+n+'.cjs')
 ]);
 function walk(dir,prefix='') {
   for(const entry of fs.readdirSync(dir,{withFileTypes:true})) {

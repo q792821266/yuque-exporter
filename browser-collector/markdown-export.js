@@ -96,5 +96,14 @@ const MarkdownBundle = (() => {
     await archive.addText("README.md",index.join("\n"));await archive.addJSON("export-report.json",report);
     return report;
   }
-  return {write,safeName,decode};
+  async function writeSingle(snapshot,archive,progress) {
+    if(!snapshot?.book || !snapshot.document)throw new Error("单篇采集快照缺失。");
+    const book={...snapshot.book,id:String(snapshot.book.id),docs:[snapshot.document]};
+    const key=book.id+"/"+snapshot.document.id;
+    const runId=snapshot.run_id || "single-"+snapshot.document.id;
+    const state={inventory_complete:true,run_id:runId,owner_id:snapshot.owner_id,owner_login:snapshot.owner_login,
+      books:[book],jobs:{[key]:{book_id:book.id,status:"done"}}};
+    return write(state,async()=>({...snapshot,run_id:runId}),archive,progress);
+  }
+  return {write,writeSingle,safeName,decode};
 })();

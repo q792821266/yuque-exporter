@@ -5,7 +5,7 @@ const {createHash}=require('node:crypto');
 const {spawnSync}=require('node:child_process');
 const root=path.resolve(__dirname,'..');
 const runtimeFiles=['manifest.json','popup.html','popup.js','batch.html','batch.js','batch-model.js',
-  'collector-core.js','concurrency.js','zip.js','markdown.js','markdown-export.js','verified-versions.json','README.md'];
+  'collector-core.js','concurrency.js','zip.js','markdown.js','markdown-export.js','download.js','verified-versions.json','README.md'];
 const files=['README.md','PRIVACY.md','LICENSE','CHANGELOG.md',...runtimeFiles.map(name=>'browser-collector/'+name)];
 function metadata(tag) {
   const version=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8')).version;
