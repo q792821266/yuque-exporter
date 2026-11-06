@@ -4,7 +4,8 @@
   "private": true,
   "description": "Local browser collector for personal Yuque document backups",
   "scripts": {
-    "test": "node scripts/run-tests.cjs"
+    "test": "node scripts/run-tests.cjs",
+    "package": "node scripts/build-release.cjs"
   },
   "engines": {
     "node": ">=22"

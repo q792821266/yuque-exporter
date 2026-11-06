@@ -3,16 +3,17 @@ const fs=require('node:fs');
 const path=require('node:path');
 const root=path.resolve(__dirname,'..');
 const expected=new Set([
-  '.gitignore','README.md','PRIVACY.md','LICENSE','package.json','scripts/run-tests.cjs',
+  '.gitignore','README.md','PRIVACY.md','LICENSE','CHANGELOG.md','package.json','scripts/run-tests.cjs','scripts/build-release.cjs','.github/workflows/ci.yml',
   ...['manifest.json','popup.html','popup.js','batch.html','batch.js','batch-model.js','collector-core.js','concurrency.js','zip.js','markdown.js','markdown-export.js','verified-versions.json','README.md'].map(n=>'browser-collector/'+n),
   'tests/markdown-browser.html','tests/markdown-browser.js',
-  ...['test_collector','test_batch_collector','test_batch_queue','test_concurrency','test_batch_download','test_public_release','test_markdown'].map(n=>'tests/'+n+'.cjs')
+  ...['test_collector','test_batch_collector','test_batch_queue','test_concurrency','test_batch_download','test_public_release','test_markdown','test_release'].map(n=>'tests/'+n+'.cjs')
 ]);
 function walk(dir,prefix='') {
   for(const entry of fs.readdirSync(dir,{withFileTypes:true})) {
     if(!prefix&&entry.name==='.git')continue;
     const name=prefix+entry.name,full=path.join(dir,entry.name);
     assert.ok(!entry.isSymbolicLink(),'Symlink is not part of the public release: '+name);
+    if(!prefix&&entry.name==='dist'&&entry.isDirectory())continue;
     if(entry.isDirectory())walk(full,name+'/');
     else {
       assert.ok(expected.delete(name),'Unexpected public file: '+name);

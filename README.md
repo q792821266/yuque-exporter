@@ -18,7 +18,7 @@
 
 ## 安装
 
-1. 下载仓库 ZIP 并解压，或使用 Git 克隆仓库。
+1. 从仓库的 Releases 下载 `yuque-exporter-版本号.zip` 并解压；也可以下载源码 ZIP 或使用 Git 克隆仓库。
 2. 在 Edge 打开 `edge://extensions`，或在 Chrome 打开 `chrome://extensions`。
 3. 启用“开发人员模式”，选择“加载解压缩的扩展程序”。
 4. 选择仓库中的 `browser-collector` 目录，该目录直接包含 `manifest.json`。
@@ -131,6 +131,21 @@ PRIVACY.md              数据与权限说明
 ```
 
 修改后重新加载扩展并手动验证页面。报告问题时请提供扩展版本、浏览器版本、操作步骤和经过脱敏的错误文字，不要附带真实采集包、登录信息或带签名参数的资源链接。
+
+## 构建与发布
+
+```sh
+npm test
+npm run package
+```
+
+安装包、同名 `.sha256` 校验文件和发布说明生成在 `dist/`。构建仅打包明确列出的插件运行文件、README、隐私说明、许可证和更新记录；测试、工作流、私有采集包及本机任务不进入安装包。构建会检查公开文件清单、空版本核验记录及版本号一致性。
+
+每次提交和 Pull Request 自动在 Windows、Linux 的 Node.js 22、24 环境运行测试与打包。通过 Actions 可下载 `extension-package` 构建产物。更新版本时同时修改 `package.json`、`browser-collector/manifest.json` 及 `CHANGELOG.md`，将代码提交后创建同版本标签，例如 `v0.5.1`。标签触发的全部测试通过后，工作流创建 GitHub Release 并上传安装包和校验文件；标签与版本不匹配时停止发布。不要移动或重复发布已有版本标签。
+
+下载后可使用 PowerShell `Get-FileHash .\yuque-exporter-版本号.zip -Algorithm SHA256`，或 Linux `sha256sum -c yuque-exporter-版本号.zip.sha256` 校验完整性。
+
+工作流按 [GitHub Actions 权限说明](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax) 配置，发布使用 [GitHub CLI release create](https://cli.github.com/manual/gh_release_create)。更新记录见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 许可证
 
