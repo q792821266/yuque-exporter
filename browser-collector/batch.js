@@ -1,6 +1,6 @@
 /* A full extension page owns the queue; IndexedDB commits each complete article. */
 const statusView = document.getElementById("status");
-const controls = ["inventory","incremental","fresh","history","run","retry","save","all","limit","concurrency"].map(id=>document.getElementById(id));
+const controls = ["inventory","incremental","fresh","history","run","retry","save","markdown","all","limit","concurrency"].map(id=>document.getElementById(id));
 let paused = false;
 const dbReady = new Promise((resolve,reject)=>{
   const request = indexedDB.open("yuque-private-backup",1);
@@ -230,13 +230,24 @@ function renderHistory(state) {
     select.append(option);
   }
 }
-async function saveSelected(state) {
+async function saveMarkdown(state) {
+  if (!state?.inventory_complete || !/^[\w-]+$/.test(state.run_id)) throw new Error("请先完成有效任务的目录盘点。");
+  const archive=new SnapshotZip();
+  const report=await MarkdownBundle.write(state,(key,job)=>readRecord(job.snapshot_key || key),archive,
+    (index,total,title)=>show(state,`转换 Markdown ${index}/${total}：${title}`));
+  const filename="yuque-migration/"+state.run_id+"-markdown.zip";
+  show(state,"Markdown 打包完成，正在保存 ZIP……");
+  await downloadBlob(archive.finish(),filename);
+  show(state,`Markdown 下载完成：${report.success} 篇，${report.pending.length} 篇未采集或失败，${report.warnings.length} 条链接提示。解压后打开 README.md 查看目录。`);
+}
+async function saveSelected(state, format="snapshot") {
+  const download=format==="markdown" ? saveMarkdown : save;
   const id = document.getElementById("history").value;
   if (state?.history?.includes(id)) {
     const archived = await readRecord("history/"+id);
     if (!archived || archived.run_id !== id || archived.owner_id !== state.owner_id) throw new Error("历史清单缺失或账号不匹配。");
-    await save(archived);
-  } else await save(state);
+    await download(archived);
+  } else await download(state);
 }
 function syncLimit() {document.getElementById("limit").disabled=document.getElementById("all").checked;}
 function selectedLimit() {return document.getElementById("all").checked?null:Number(document.getElementById("limit").value);}
@@ -249,6 +260,7 @@ document.getElementById("run").addEventListener("click",()=>exclusive(state=>run
 document.getElementById("retry").addEventListener("click",()=>exclusive(state=>run(state,true,selectedLimit(),Number(document.getElementById("concurrency").value))));
 document.getElementById("pause").addEventListener("click",()=>{paused=true;statusView.textContent="将停止安排新文章，等待正在采集的文章保存后暂停。";});
 document.getElementById("save").addEventListener("click",()=>exclusive(saveSelected));
+document.getElementById("markdown").addEventListener("click",()=>exclusive(state=>saveSelected(state,"markdown")));
 readRecord("state").then(state=>{
   if (state) renderHistory(state);
   show(state,state?"已恢复本机任务。请选择继续盘点、继续采集或下载。":"尚无本机任务，请先盘点目录。");

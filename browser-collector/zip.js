@@ -22,6 +22,12 @@ class SnapshotZip {
     this.directorySize = 0;
   }
   async addJSON(name, value) {
+    return this.addText(name, JSON.stringify(value));
+  }
+  async addText(name, value) {
+    return this.addBytes(name, new TextEncoder().encode(value));
+  }
+  async addBytes(name, bytes) {
     if (!name || name.startsWith("/") || name.includes("\\") || name.includes(":") ||
         name.split("/").some(part => !part || part === "." || part === "..") || /[\x00-\x1f]/.test(name)) {
       throw new Error("采集包文件名无效。");
@@ -29,7 +35,7 @@ class SnapshotZip {
     if (this.names.has(name)) throw new Error("采集包文件名重复。");
     if (this.names.size >= 65534) throw new Error("ZIP 文件数量过多，未生成不完整采集包。");
     const filename = new TextEncoder().encode(name);
-    const bytes = new TextEncoder().encode(JSON.stringify(value));
+    if (!ArrayBuffer.isView(bytes) || Object.prototype.toString.call(bytes)!=="[object Uint8Array]") throw new Error("ZIP 内容必须为字节数组。");
     if (filename.length > 65535 || bytes.length >= 0xffffffff) throw new Error("ZIP 文件超出大小限制。");
     let body = new Blob([bytes]), method = 0, compressor;
     try { compressor = new CompressionStream("deflate-raw"); }

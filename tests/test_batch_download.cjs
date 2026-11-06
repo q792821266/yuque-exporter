@@ -23,18 +23,20 @@ function setup(options={}) {
   }
   const element=()=>({textContent:'',addEventListener(){},replaceChildren(){},append(){}});
   const elements=new Map();
-  const context=vm.createContext({Blob,Response,TextEncoder,crypto:webcrypto,AbortSignal,setTimeout,
+  const context=vm.createContext({Blob,Response,TextEncoder,TextDecoder,Uint8Array,atob,crypto:webcrypto,AbortSignal,setTimeout,
     CompressionStream:options.store?undefined:CompressionStream,
-    URL:{createObjectURL:blob=>{blobs.set('blob:test',blob);return 'blob:test';},revokeObjectURL:url=>revoked.push(url)},
+    URL:class extends URL {static createObjectURL(blob){blobs.set('blob:test',blob);return 'blob:test';} static revokeObjectURL(url){revoked.push(url);}},
     document:{getElementById:id=>{if(!elements.has(id))elements.set(id,element());return elements.get(id);},createElement:element},
     indexedDB:{open:()=>({})},navigator:{},state,
     load:async key=>{assert.equal(key,storedKey);return options.missing?undefined:{...snapshot,...(options.mismatch?{run_id:'wrong'}:{})};},
     chrome:{downloads:{download:async args=>{downloads.push(args);if(options.reject)throw Error('download rejected');return 1;},
       search:async()=>[{state:options.interrupted?'interrupted':'complete'}]}}
   });
-  for(const f of ['collector-core.js','concurrency.js','batch-model.js','zip.js','batch.js'])
+  for(const f of ['collector-core.js','concurrency.js','batch-model.js','zip.js','markdown.js','markdown-export.js','batch.js'])
     vm.runInContext(fs.readFileSync('browser-collector/'+f,'utf8'),context);
   vm.runInContext('readRecord=load;',context);
+  // The renderer itself has separate AST and native-browser tests.
+  vm.runInContext('LakeMarkdown.convert=(_html,resolve)=>"![image](<"+resolve("https://cdn.nlark.com/test.png",true)+">)\\n";',context);
   return {context,state,downloads,revoked,blobs,save:()=>vm.runInContext('save(state)',context)};
 }
 (async()=>{
@@ -66,5 +68,24 @@ function setup(options={}) {
   if(process.argv[2])fs.writeFileSync(path.join(process.argv[2],'unicode.zip'),Buffer.from(await z.finish().arrayBuffer()));
   const capped=vm.runInContext('new SnapshotZip()',r.context);capped.offset=0xffffffff-22;
   await assert.rejects(capped.addJSON('large.json',{}),/大小限制/);
+  const markdown=setup({reused:true});
+  await vm.runInContext('saveSelected(state,"markdown")',markdown.context);
+  assert.equal(markdown.downloads.length,1);
+  assert.equal(markdown.downloads[0].filename,'yuque-migration/test-run-markdown.zip');
+  assert.deepEqual(markdown.revoked,['blob:test']);
+  if(process.argv[2])fs.writeFileSync(path.join(process.argv[2],'markdown.zip'),Buffer.from(await markdown.blobs.get('blob:test').arrayBuffer()));
+  const broken=setup({missing:true});
+  await assert.rejects(vm.runInContext('saveMarkdown(state)',broken.context),/身份/);
+  assert.equal(broken.downloads.length,0);
+  const cancelled=setup({interrupted:true});
+  await assert.rejects(vm.runInContext('saveMarkdown(state)',cancelled.context),/中断/);
+  assert.deepEqual(cancelled.revoked,['blob:test']);
+  const historical=setup(),archived=structuredClone(historical.state);
+  historical.state.run_id='current-run';historical.state.history=[archived.run_id];
+  historical.context.document.getElementById('history').value=archived.run_id;
+  const originalLoad=historical.context.readRecord;
+  historical.context.readRecord=async key=>key==='history/'+archived.run_id?archived:originalLoad(key);
+  await vm.runInContext('saveSelected(state,"markdown")',historical.context);
+  assert.equal(historical.downloads[0].filename,'yuque-migration/test-run-markdown.zip');
   console.log('Single ZIP download, compression/fallback, UTF-8, size limits, incomplete inventory, failure and cancellation checks passed.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

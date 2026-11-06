@@ -20,12 +20,15 @@ body{font:16px/1.7 system-ui,sans-serif;max-width:960px;margin:40px auto;padding
 <button id="pause">完成正在采集的文章后暂停</button>
 <label>下载任务 <select id="history"></select></label>
 <button id="save">下载本地采集包（ZIP）</button>
+<button id="markdown">下载 Markdown（ZIP）</button>
 <pre id="status" aria-live="polite">正在读取本地任务……</pre>
 <table><thead><tr><th>知识库</th><th>已发布</th><th>成功</th><th>失败</th></tr></thead><tbody id="books"></tbody></table>
-<p><small>一次下载一个 ZIP，内含 inventory.json 和每篇成功文章的 JSON。解压后可导入本机 Markdown 资料库。文件包含私密正文和图片，不要上传到公开仓库。工具不修改语雀，也不发布网站。</small></p>
+<p><small>Markdown ZIP 内含按知识库整理的文章、本地图片附件和目录，直接解压阅读，无需重新采集。原始采集包内含清单与 JSON，可继续用于导入和备份。两种格式均支持当前与历史任务。文件可能包含私密正文，请勿上传公开仓库。工具不修改语雀，也不发布网站。</small></p>
 <script src="collector-core.js"></script>
 <script src="concurrency.js"></script>
 <script src="batch-model.js"></script>
 <script src="zip.js"></script>
+<script src="markdown.js"></script>
+<script src="markdown-export.js"></script>
 <script src="batch.js"></script>
 </html>

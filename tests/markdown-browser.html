@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><title>Markdown browser tests</title>
+<h1>Markdown browser tests</h1><pre id="result">Running…</pre>
+<script src="../browser-collector/markdown.js"></script>
+<script src="markdown-browser.js"></script>
+<script>
+try { document.getElementById('result').textContent=JSON.stringify(runMarkdownBrowserTests(),null,2); }
+catch(error) { document.getElementById('result').textContent='FAILED: '+error.message; }
+</script></html>
