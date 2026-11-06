@@ -100,12 +100,30 @@ function runner(options={}) {
   records.clear();records.set('state',initial());
   r=runner();await r.run(false);
   const old=records.get('state'), original=structuredClone(records.get('10/2'));
+  // Real list responses omit content_modified; detail confirmation must avoid
+  // downloading unchanged assets while still rejecting edits and wrong IDs.
+  const missingFlag={...doc(1)};delete missingFlag.content_modified;
+  const fallback=runner(), fallbackContext=fallback.context;
+  const reusable=()=>fallbackContext.reusableJob(old,old.books[0],missingFlag);
+  assert.equal((await reusable()).status,'done');
+  assert.deepEqual(Array.from(fallbackContext.calls),[1]);
+  for(const change of [
+    {content_modified:true},{content_modified:undefined},{status:0},
+    {content:'<p>changed</p>'},{id:2},{book_id:20},{deleted_at:'2026-10-28T00:00:00Z'},
+    {content_updated_at:'2026-10-28T00:00:00Z'}
+  ]) {
+    fallbackContext.get=async()=>({...doc(1),...change});
+    assert.equal(await reusable(),null);
+  }
+  fallbackContext.get=async()=>{throw new Error('HTTP 503');};
+  await assert.rejects(reusable(),/503/);
+  assert.deepEqual(records.get('state'),old);
   const refresh=runner(), ctx=refresh.context;
   const newDocs=[doc(1),{...doc(2),title:'Revised'},doc(3)];
   ctx.get=async path=>{
     if(path==='/api/mine')return {id:9,login:'me'};
     if(path==='/api/mine/book_stacks')return [{books:[{id:10,slug:'book',name:'Notes',items_count:3,user_id:9}]}];
-    if(path.startsWith('/api/docs?'))return newDocs;
+    if(path.startsWith('/api/docs?'))return newDocs.map(d=>{const row={...d};delete row.content_modified;return row;});
     const id=Number(path.match(/docs\/d(\d+)/)[1]);
     return newDocs.find(d=>d.id===id);
   };

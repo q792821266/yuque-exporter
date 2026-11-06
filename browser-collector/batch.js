@@ -60,7 +60,7 @@ async function verifyOwner(state) {
 async function reusableJob(previous, book, doc) {
   const key = book.id + "/" + doc.id;
   const job = previous.jobs[key];
-  if (!job || job.status !== "done" || doc.status !== 1 || doc.content_modified !== false ||
+  if (!job || job.status !== "done" || doc.status !== 1 || (doc.content_modified != null && doc.content_modified !== false) ||
       !Number.isFinite(Date.parse(doc.content_updated_at)) ||
       !(Date.parse(doc.published_at) >= Date.parse(doc.content_updated_at))) return null;
   const recordKey = job.snapshot_key || key;
@@ -69,8 +69,15 @@ async function reusableJob(previous, book, doc) {
   if (!snapshot || snapshot.owner_id !== previous.owner_id || snapshot.owner_login !== previous.owner_login ||
       snapshot.run_id !== sourceRun || snapshot.book?.namespace !== book.namespace ||
       String(snapshot.book.id) !== book.id || String(snapshot.document?.id) !== String(doc.id)) return null;
-  const fields = ["slug","title","type","status","content_modified","published_at","content_updated_at"];
+  const fields = ["slug","title","type","status","published_at","content_updated_at"];
   if (!fields.every(field => doc[field] != null && snapshot.document[field] === doc[field])) return null;
+  if (snapshot.document.type !== "Doc" || snapshot.document.content_modified !== false) return null;
+  // The list endpoint may omit this flag. Confirm the detail response instead
+  // of treating an absent flag as either an unchanged article or a new version.
+  if (doc.content_modified == null) {
+    const latest = await get(`/api/docs/${encodeURIComponent(doc.slug)}?book_id=${encodeURIComponent(book.id)}&merge_dynamic_data=true`);
+    if (!sameCapture(snapshot.document, latest) || latest.content_modified !== false) return null;
+  }
   return {book_id: book.id, status: "done", snapshot_key: recordKey, snapshot_run: sourceRun};
 }
 
